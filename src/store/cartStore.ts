@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Product, CartState } from '../types/product';
-import { calculateCartTotal, calculateItemCount } from '../utils/helpers';
+import { Product, CartState } from '@/types/product';
+import { calculateCartTotal, calculateItemCount } from '@/utils/helpers';
 
 // Define the shape of cart state and actions
 interface CartStore extends CartState {

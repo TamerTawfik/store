@@ -1,4 +1,4 @@
-import { Product, CartItem } from '../types/product';
+import { Product, CartItem } from '@/types/product';
 
 // Format price with currency
 export const formatPrice = (price: number): string => {
