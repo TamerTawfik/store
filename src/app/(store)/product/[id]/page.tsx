@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
               src={product.image}
               alt={product.title}
               fill
-              className="object-contain p-8"
+              className="bg-white object-contain p-8"
               priority
             />
           </div>
@@ -196,10 +196,6 @@ export default function ProductDetailPage() {
                 <dd className="text-gray-900 font-medium">
                   {product.rating.rate}/5 ({product.rating.count} reviews)
                 </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Product ID:</dt>
-                <dd className="text-gray-900 font-medium">{product.id}</dd>
               </div>
             </dl>
           </div>

@@ -80,7 +80,7 @@ export const CartItem: React.FC<CartItemProps> = ({
           variant="destructive"
           size="sm"
           onClick={handleRemove}
-          className="mt-2 text-red-500"
+          className="mt-2"
         >
           Remove
         </Button>
