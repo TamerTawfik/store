@@ -1,15 +1,24 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Product, ProductFilters as ProductFiltersType } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductFilters } from "@/components/product/ProductFilters";
+import { NoResults } from "@/components/product/NoResults";
 import {
   ProductSkeleton,
   ProductSkeletonGrid,
   ProductSkeletonList,
 } from "@/components/product/ProductSkeleton";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useCategories } from "@/hooks/useProducts";
+import { useSearch } from "@/hooks/useSearch";
 import { sortProducts, filterProductsAdvanced } from "@/utils/helpers";
+import { generateBreadcrumbs } from "@/utils/breadcrumbUtils";
+import {
+  getTrendingProducts,
+  getRecommendedCategories,
+} from "@/utils/recommendationUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,6 +56,14 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
 }) => {
   const { addToCart, isInCart, getItemQuantity } = useCart();
   const { categories } = useCategories();
+  const searchParams = useSearchParams();
+
+  const {
+    trendingSearches,
+    popularProducts,
+    suggestedCategories,
+    addToRecentSearches,
+  } = useSearch({ products, categories });
 
   // Internal state for view mode and filters (used when not controlled externally)
   const [internalViewMode, setInternalViewMode] = useState<"grid" | "list">(
@@ -131,6 +148,45 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
 
   const activeFiltersCount = getActiveFiltersCount();
 
+  // Generate breadcrumbs based on current filters and search
+  const breadcrumbs = useMemo(() => {
+    const searchQuery =
+      searchParams.get("search") ||
+      searchParams.get("q") ||
+      filters.searchQuery;
+    const category = searchParams.get("category") || filters.category;
+
+    return generateBreadcrumbs({
+      category,
+      searchQuery: searchQuery || undefined,
+    });
+  }, [searchParams, filters.category, filters.searchQuery]);
+
+  // Handle category selection from no results
+  const handleCategoryClick = useCallback(
+    (category: string) => {
+      onFiltersChange({
+        ...filters,
+        category,
+        searchQuery: undefined, // Clear search when selecting category
+      });
+    },
+    [filters, onFiltersChange]
+  );
+
+  // Handle search from no results
+  const handleSearchClick = useCallback(
+    (query: string) => {
+      onFiltersChange({
+        ...filters,
+        searchQuery: query,
+        category: undefined, // Clear category when searching
+      });
+      addToRecentSearches(query);
+    },
+    [filters, onFiltersChange, addToRecentSearches]
+  );
+
   // Loading state with skeletons
   if (loading) {
     return (
@@ -161,6 +217,13 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      {breadcrumbs.length > 1 && (
+        <div className="px-4 sm:px-0">
+          <Breadcrumb items={breadcrumbs} />
+        </div>
+      )}
+
       {/* Enhanced Header with Controls */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -359,23 +422,20 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
         {/* Products Content */}
         <div className="flex-1 min-w-0">
           {processedProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <SlidersHorizontal className="h-8 w-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No products found
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Try adjusting your filters or search criteria to find what
-                  you&apos;re looking for.
-                </p>
-                <Button onClick={clearAllFilters} variant="outline">
-                  Clear all filters
-                </Button>
-              </div>
-            </div>
+            <NoResults
+              searchQuery={
+                filters.searchQuery ||
+                searchParams.get("search") ||
+                searchParams.get("q") ||
+                undefined
+              }
+              suggestedCategories={suggestedCategories}
+              popularProducts={popularProducts}
+              trendingSearches={trendingSearches}
+              onCategoryClick={handleCategoryClick}
+              onSearchClick={handleSearchClick}
+              onClearFilters={clearAllFilters}
+            />
           ) : (
             <div
               className={cn(

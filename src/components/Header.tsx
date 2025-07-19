@@ -2,16 +2,57 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
+import { useProducts, useCategories } from "@/hooks/useProducts";
+import { useSearch } from "@/hooks/useSearch";
 import { CartSidebar } from "@/components/cart/CartSidebar";
+import { SearchInput } from "@/components/ui/search";
+import { Menu, X } from "lucide-react";
 
 export const Header: React.FC = () => {
   const { cartState } = useCart();
+  const { products } = useProducts();
+  const { categories } = useCategories();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    suggestions,
+    recentSearches,
+    trendingSearches,
+    addToRecentSearches,
+  } = useSearch({ products, categories });
 
   const toggleCart = () => {
     setIsCartOpen(!isCartOpen);
   };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      addToRecentSearches(query);
+      const params = new URLSearchParams(searchParams);
+      params.set("search", query);
+      router.push(`/?${params.toString()}`);
+    }
+  };
+
+  // Initialize search query from URL params
+  React.useEffect(() => {
+    const searchFromUrl = searchParams.get("search") || searchParams.get("q");
+    if (searchFromUrl && searchFromUrl !== searchQuery) {
+      setSearchQuery(searchFromUrl);
+    }
+  }, [searchParams, searchQuery, setSearchQuery]);
 
   return (
     <>
@@ -19,9 +60,23 @@ export const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center flex-shrink-0">
               <h1 className="text-2xl font-bold text-blue-600">FakeStore</h1>
             </Link>
+
+            {/* Search Bar - Desktop */}
+            <div className="hidden md:flex flex-1 max-w-lg mx-8">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSearch={handleSearch}
+                suggestions={suggestions}
+                recentSearches={recentSearches}
+                trendingSearches={trendingSearches}
+                placeholder="Search products..."
+                className="w-full"
+              />
+            </div>
 
             {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
@@ -45,11 +100,12 @@ export const Header: React.FC = () => {
               </Link>
             </nav>
 
-            {/* Cart Icon */}
+            {/* Right side actions */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={toggleCart}
                 className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                aria-label="Shopping cart"
               >
                 <svg
                   className="h-6 w-6"
@@ -73,25 +129,63 @@ export const Header: React.FC = () => {
               </button>
 
               {/* Mobile menu button */}
-              <button className="md:hidden p-2 text-gray-700 hover:text-blue-600 transition-colors">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
+              <button
+                onClick={toggleMobileMenu}
+                className="md:hidden p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                aria-label="Toggle mobile menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </button>
             </div>
           </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden px-4 pb-4">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSearch={handleSearch}
+              suggestions={suggestions}
+              recentSearches={recentSearches}
+              trendingSearches={trendingSearches}
+              placeholder="Search products..."
+              className="w-full"
+            />
+          </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200">
+            <div className="px-4 py-2 space-y-1">
+              <Link
+                href="/"
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                href="/products"
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Products
+              </Link>
+              <Link
+                href="/cart"
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Cart ({cartState.itemCount})
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Cart Sidebar */}
