@@ -76,7 +76,7 @@ export default function ProductDetailPage() {
           <li>
             <span className="mx-2">/</span>
             <button
-              onClick={() => router.push("/products")}
+              onClick={() => router.push("/")}
               className="hover:text-blue-600 cursor-pointer"
             >
               Products

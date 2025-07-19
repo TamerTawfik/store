@@ -168,55 +168,21 @@ export const Header: React.FC = () => {
               </div>
             </Link>
 
-            {/* Enhanced Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                recentSearches={recentSearches}
-                trendingSearches={trendingSearches}
-                placeholder="Search for products, brands, categories..."
-                className="w-full"
-              />
+            {/* Centered Search Bar - Desktop */}
+            <div className="hidden md:flex flex-1 justify-center">
+              <div className="w-full max-w-2xl">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onSearch={handleSearch}
+                  suggestions={suggestions}
+                  recentSearches={recentSearches}
+                  trendingSearches={trendingSearches}
+                  placeholder="Search for products, brands, categories..."
+                  className="w-full"
+                />
+              </div>
             </div>
-
-            {/* Enhanced Navigation */}
-            <nav
-              className="hidden lg:flex items-center space-x-1"
-              role="navigation"
-              aria-label="Main navigation"
-            >
-              <Link href="/">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-all duration-200 focus-ring"
-                  aria-label="Go to home page"
-                >
-                  <Package className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Home
-                </Button>
-              </Link>
-              <Link href="/products">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-all duration-200 focus-ring"
-                  aria-label="Browse all products"
-                >
-                  Products
-                </Button>
-              </Link>
-              <Link href="/categories">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-all duration-200 focus-ring"
-                  aria-label="Browse product categories"
-                >
-                  Categories
-                </Button>
-              </Link>
-            </nav>
 
             {/* Enhanced Right side actions */}
             <div className="flex items-center space-x-2">
@@ -392,41 +358,8 @@ export const Header: React.FC = () => {
             aria-label="Mobile navigation menu"
           >
             <div className="px-4 py-4 space-y-2">
-              {/* Navigation Links */}
-              <Link
-                href="/"
-                className="flex items-center px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium focus-ring"
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Go to home page"
-              >
-                <Package className="h-5 w-5 mr-3" aria-hidden="true" />
-                Home
-              </Link>
-              <Link
-                href="/products"
-                className="flex items-center px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium focus-ring"
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Browse all products"
-              >
-                <Store className="h-5 w-5 mr-3" aria-hidden="true" />
-                Products
-              </Link>
-              <Link
-                href="/categories"
-                className="flex items-center px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium focus-ring"
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Browse product categories"
-              >
-                <Menu className="h-5 w-5 mr-3" aria-hidden="true" />
-                Categories
-              </Link>
-
               {/* Mobile-specific actions */}
-              <div
-                className="border-t border-gray-200 pt-4 mt-4"
-                role="group"
-                aria-label="Shopping actions"
-              >
+              <div className="pt-2" role="group" aria-label="Shopping actions">
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
