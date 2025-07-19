@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { Product, ProductFilters as ProductFiltersType } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -32,6 +38,12 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { Grid3X3, List, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  generateAriaLabel,
+  keyboardHandlers,
+  screenReader,
+  ariaStates,
+} from "@/utils/accessibility";
 
 interface EnhancedProductListProps {
   products: Product[];
@@ -74,6 +86,11 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Refs for accessibility
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const sortSelectRef = useRef<HTMLSelectElement>(null);
 
   // Use external props if provided, otherwise use internal state
   const viewMode = externalViewMode ?? internalViewMode;
@@ -216,12 +233,18 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <main
+      ref={mainContentRef}
+      id="main-content"
+      className="space-y-6"
+      role="main"
+      aria-label="Product listing"
+    >
       {/* Breadcrumbs */}
       {breadcrumbs.length > 1 && (
-        <div className="px-4 sm:px-0">
+        <nav className="px-4 sm:px-0" aria-label="Breadcrumb navigation">
           <Breadcrumb items={breadcrumbs} />
-        </div>
+        </nav>
       )}
 
       {/* Enhanced Header with Controls */}
@@ -230,11 +253,23 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
           {/* Results Info and Active Filters */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2
+                className="text-lg font-semibold text-gray-900"
+                id="products-heading"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 Products ({processedProducts.length})
               </h2>
               {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge
+                  variant="secondary"
+                  className="text-xs"
+                  role="status"
+                  aria-label={`${activeFiltersCount} filter${
+                    activeFiltersCount !== 1 ? "s" : ""
+                  } currently active`}
+                >
                   {activeFiltersCount} filter
                   {activeFiltersCount !== 1 ? "s" : ""} active
                 </Badge>
@@ -337,60 +372,123 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-3"
+            role="toolbar"
+            aria-label="Product display controls"
+          >
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 hidden sm:block">
+              <label
+                htmlFor="sort-select"
+                className="text-sm text-gray-600 hidden sm:block"
+              >
                 Sort:
-              </span>
+              </label>
               <Select
                 value={filters.sortBy || ""}
-                onValueChange={handleSortChange}
+                onValueChange={(value) => {
+                  handleSortChange(value);
+                  screenReader.announceToScreenReader(
+                    `Products sorted by ${value}`
+                  );
+                }}
               >
-                <SelectTrigger className="w-[140px] sm:w-[180px]">
+                <SelectTrigger
+                  id="sort-select"
+                  className="w-[140px] sm:w-[180px] focus-ring"
+                  aria-label={generateAriaLabel.sortSelect(
+                    filters.sortBy || "name"
+                  )}
+                >
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                  <SelectItem value="popularity">Popularity</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
+                <SelectContent role="listbox">
+                  <SelectItem value="name" role="option">
+                    Name
+                  </SelectItem>
+                  <SelectItem value="price-asc" role="option">
+                    Price: Low to High
+                  </SelectItem>
+                  <SelectItem value="price-desc" role="option">
+                    Price: High to Low
+                  </SelectItem>
+                  <SelectItem value="rating" role="option">
+                    Rating
+                  </SelectItem>
+                  <SelectItem value="popularity" role="option">
+                    Popularity
+                  </SelectItem>
+                  <SelectItem value="newest" role="option">
+                    Newest
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center border rounded-lg p-1">
+            <div
+              className="flex items-center border rounded-lg p-1"
+              role="group"
+              aria-label="View mode selection"
+            >
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => handleViewModeChange("grid")}
-                className="h-8 w-8 p-0"
+                onClick={() => {
+                  handleViewModeChange("grid");
+                  screenReader.announceToScreenReader("Grid view selected");
+                }}
+                className="h-8 w-8 p-0 focus-ring"
+                aria-label={generateAriaLabel.viewModeButton(
+                  "grid",
+                  viewMode === "grid"
+                )}
+                aria-pressed={viewMode === "grid"}
               >
-                <Grid3X3 className="h-4 w-4" />
+                <Grid3X3 className="h-4 w-4" aria-hidden="true" />
               </Button>
               <Button
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => handleViewModeChange("list")}
-                className="h-8 w-8 p-0"
+                onClick={() => {
+                  handleViewModeChange("list");
+                  screenReader.announceToScreenReader("List view selected");
+                }}
+                className="h-8 w-8 p-0 focus-ring"
+                aria-label={generateAriaLabel.viewModeButton(
+                  "list",
+                  viewMode === "list"
+                )}
+                aria-pressed={viewMode === "list"}
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
 
             {/* Filters Toggle */}
             <Button
               variant="outline"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="gap-2"
+              onClick={() => {
+                const newState = !filtersOpen;
+                setFiltersOpen(newState);
+                screenReader.announceToScreenReader(
+                  newState ? "Filters panel opened" : "Filters panel closed"
+                );
+              }}
+              className="gap-2 focus-ring"
+              aria-expanded={filtersOpen}
+              aria-controls="filters-panel"
+              aria-label={generateAriaLabel.filterButton(
+                "main",
+                filtersOpen,
+                activeFiltersCount
+              )}
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Filters</span>
               {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1" aria-hidden="true">
                   {activeFiltersCount}
                 </Badge>
               )}
@@ -437,45 +535,64 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
               onClearFilters={clearAllFilters}
             />
           ) : (
-            <div
+            <section
+              ref={resultsRef}
               className={cn(
                 "transition-all duration-300",
                 isTransitioning && "opacity-50 scale-95"
               )}
+              aria-labelledby="products-heading"
+              aria-live="polite"
+              aria-busy={isTransitioning}
             >
               {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                  {processedProducts.map((product) => (
-                    <ProductCard
+                <div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
+                  role="grid"
+                  aria-label={`Product grid with ${processedProducts.length} products`}
+                >
+                  {processedProducts.map((product, index) => (
+                    <div
                       key={product.id}
-                      product={product}
-                      onAddToCart={addToCart}
-                      isInCart={isInCart(product.id)}
-                      cartQuantity={getItemQuantity(product.id)}
-                      viewMode="grid"
-                      showBadges={true}
-                    />
+                      role="gridcell"
+                      aria-rowindex={Math.floor(index / 4) + 1}
+                      aria-colindex={(index % 4) + 1}
+                    >
+                      <ProductCard
+                        product={product}
+                        onAddToCart={addToCart}
+                        isInCart={isInCart(product.id)}
+                        cartQuantity={getItemQuantity(product.id)}
+                        viewMode="grid"
+                        showBadges={true}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div
+                  className="space-y-4"
+                  role="list"
+                  aria-label={`Product list with ${processedProducts.length} products`}
+                >
                   {processedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={addToCart}
-                      isInCart={isInCart(product.id)}
-                      cartQuantity={getItemQuantity(product.id)}
-                      viewMode="list"
-                      showBadges={true}
-                    />
+                    <div key={product.id} role="listitem">
+                      <ProductCard
+                        product={product}
+                        onAddToCart={addToCart}
+                        isInCart={isInCart(product.id)}
+                        cartQuantity={getItemQuantity(product.id)}
+                        viewMode="list"
+                        showBadges={true}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 };

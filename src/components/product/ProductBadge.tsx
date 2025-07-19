@@ -10,6 +10,7 @@ import {
   Flame,
   Award,
 } from "lucide-react";
+import { generateAriaLabel, motionPreferences } from "@/utils/accessibility";
 
 export type BadgeType =
   | "new"
@@ -24,6 +25,7 @@ interface ProductBadgeProps {
   type: BadgeType;
   value?: string | number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const badgeConfig = {
@@ -75,23 +77,40 @@ export const ProductBadge: React.FC<ProductBadgeProps> = ({
   type,
   value,
   className,
+  ...props
 }) => {
   const config = badgeConfig[type];
   const Icon = config.icon;
 
   const displayLabel = value ? `${config.label} ${value}` : config.label;
+  const ariaLabel = generateAriaLabel.badge(type, value);
+
+  // Disable animations for users who prefer reduced motion
+  const animationClass = motionPreferences.prefersReducedMotion()
+    ? config.className.replace(/animate-\w+/g, "").trim()
+    : config.className;
 
   return (
     <Badge
       variant="outline"
       className={cn(
-        "text-xs font-semibold transition-all duration-300 hover:scale-105",
-        config.className,
+        "text-xs font-semibold focus-ring",
+        motionPreferences.prefersReducedMotion()
+          ? "transition-none"
+          : "transition-all duration-300 hover:scale-105",
+        animationClass,
         className
       )}
+      role="status"
+      aria-label={ariaLabel}
+      {...props}
     >
-      <Icon className={cn("w-3 h-3", config.iconClassName)} />
-      {displayLabel}
+      <Icon
+        className={cn("w-3 h-3", config.iconClassName)}
+        aria-hidden="true"
+      />
+      <span aria-hidden="true">{displayLabel}</span>
+      <span className="sr-only">{ariaLabel}</span>
     </Badge>
   );
 };

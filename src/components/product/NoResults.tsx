@@ -110,7 +110,7 @@ export const NoResults: React.FC<NoResultsProps> = ({
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={() => {}}
+                onAddToCart={async () => ({ success: true })}
                 isInCart={false}
                 cartQuantity={0}
                 viewMode="grid"

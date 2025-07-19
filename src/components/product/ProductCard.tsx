@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product";
@@ -12,10 +12,19 @@ import {
   getProductBadges,
   getPrimaryBadge,
 } from "@/utils/helpers";
+import {
+  generateAriaLabel,
+  keyboardHandlers,
+  screenReader,
+  motionPreferences,
+  ariaStates,
+} from "@/utils/accessibility";
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (
+    product: Product
+  ) => Promise<{ success: boolean; error?: string }>;
   isInCart: boolean;
   cartQuantity: number;
   viewMode?: "grid" | "list";
@@ -23,7 +32,7 @@ interface ProductCardProps {
   className?: string;
 }
 
-// Enhanced star rating component with filled/outlined stars
+// Enhanced star rating component with filled/outlined stars and accessibility
 const StarRating: React.FC<{ rating: number; count: number }> = ({
   rating,
   count,
@@ -31,10 +40,15 @@ const StarRating: React.FC<{ rating: number; count: number }> = ({
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating - fullStars >= 0.5;
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  const ratingId = `rating-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex items-center">
+    <div
+      className="flex items-center gap-1"
+      role="img"
+      aria-labelledby={ratingId}
+    >
+      <div className="flex items-center" aria-hidden="true">
         {/* Full stars */}
         {Array.from({ length: fullStars }).map((_, i) => (
           <Star
@@ -51,7 +65,10 @@ const StarRating: React.FC<{ rating: number; count: number }> = ({
           <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
         ))}
       </div>
-      <span className="text-sm text-muted-foreground ml-1">({count})</span>
+      <span id={ratingId} className="text-sm text-muted-foreground ml-1">
+        {generateAriaLabel.rating(rating, count)}
+      </span>
+      <span className="sr-only">{generateAriaLabel.rating(rating, count)}</span>
     </div>
   );
 };
@@ -67,37 +84,103 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [lastAction, setLastAction] = useState<string>("");
+  const cardRef = useRef<HTMLDivElement>(null);
+  const addToCartButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Generate unique IDs for accessibility
+  const cardId = `product-card-${product.id}`;
+  const titleId = `product-title-${product.id}`;
+  const priceId = `product-price-${product.id}`;
+  const ratingId = `product-rating-${product.id}`;
+  const descriptionId = `product-description-${product.id}`;
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
+    const actionText = isInCart ? "Adding another item" : "Adding to cart";
+    setLastAction(actionText);
+
+    // Announce to screen readers
+    screenReader.announceToScreenReader(`${actionText}: ${product.title}`);
+
     try {
       const result = await onAddToCart(product);
-      if (!result.success) {
-        // Handle error case if needed
-        console.error("Failed to add to cart:", result.error);
+      if (result.success) {
+        const successMessage = isInCart
+          ? `Added another ${product.title} to cart`
+          : `Added ${product.title} to cart`;
+        screenReader.announceToScreenReader(successMessage);
+        setLastAction(successMessage);
+      } else {
+        const errorMessage = `Failed to add ${product.title} to cart`;
+        screenReader.announceUrgent(errorMessage);
+        setLastAction(errorMessage);
       }
+    } catch (error) {
+      const errorMessage = `Error adding ${product.title} to cart`;
+      screenReader.announceUrgent(errorMessage);
+      setLastAction(errorMessage);
     } finally {
       // Add a small delay for better UX feedback
-      setTimeout(() => setIsAddingToCart(false), 300);
+      setTimeout(() => {
+        setIsAddingToCart(false);
+        setLastAction("");
+      }, 300);
     }
   };
 
+  // Keyboard navigation for the card
+  const handleCardKeyDown = keyboardHandlers.onEnterOrSpace(() => {
+    // Navigate to product detail page
+    window.location.href = `/product/${product.id}`;
+  });
+
+  // Keyboard navigation for add to cart button
+  const handleAddToCartKeyDown =
+    keyboardHandlers.onEnterOrSpace(handleAddToCart);
+
   const primaryBadge = getPrimaryBadge(product);
   const allBadges = getProductBadges(product);
-
   const isListView = viewMode === "list";
 
+  // Generate comprehensive aria label for the entire card
+  const cardAriaLabel = generateAriaLabel.productCard(
+    product.title,
+    product.price,
+    product.rating.rate,
+    isInCart
+  );
+
+  // Generate aria label for add to cart button
+  const addToCartAriaLabel = generateAriaLabel.addToCartButton(
+    product.title,
+    isInCart,
+    isAddingToCart
+  );
+
   return (
-    <div
+    <article
+      ref={cardRef}
+      id={cardId}
       className={cn(
         "group bg-card text-card-foreground rounded-xl border overflow-hidden transition-smooth hover-lift focus-ring",
         "shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]",
         isListView && "flex flex-row",
         className
       )}
+      role="article"
+      aria-labelledby={titleId}
+      aria-describedby={`${descriptionId} ${ratingId} ${priceId}`}
+      tabIndex={0}
+      onKeyDown={handleCardKeyDown}
     >
       {/* Image Container */}
-      <Link href={`/product/${product.id}`} className="block">
+      <Link
+        href={`/product/${product.id}`}
+        className="block focus-ring"
+        aria-label={`View details for ${product.title}`}
+        tabIndex={-1} // Remove from tab order since card is focusable
+      >
         <div
           className={cn(
             "relative bg-white cursor-pointer overflow-hidden",
@@ -105,20 +188,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
           onMouseEnter={() => setIsImageHovered(true)}
           onMouseLeave={() => setIsImageHovered(false)}
+          role="img"
+          aria-label={`Product image for ${product.title}`}
         >
           <Image
             src={product.image}
-            alt={product.title}
+            alt={`${product.title} - Product image`}
             fill
             className={cn(
-              "object-contain p-4 transition-smooth",
-              isImageHovered && "scale-110"
+              "object-contain p-4",
+              motionPreferences.prefersReducedMotion()
+                ? "transition-none"
+                : "transition-smooth",
+              !motionPreferences.prefersReducedMotion() &&
+                isImageHovered &&
+                "scale-110"
             )}
             sizes={
               isListView
                 ? "192px"
                 : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             }
+            loading="lazy"
           />
 
           {/* Badges */}
@@ -173,8 +264,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Title */}
-        <Link href={`/product/${product.id}`} className="block mb-3">
+        <Link
+          href={`/product/${product.id}`}
+          className="block mb-3 focus-ring"
+          tabIndex={-1} // Remove from tab order since card is focusable
+        >
           <h3
+            id={titleId}
             className={cn(
               "font-semibold text-foreground transition-colors hover:text-primary cursor-pointer line-clamp-2",
               isListView ? "text-lg" : "text-base"
@@ -185,7 +281,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Rating */}
-        <div className="mb-4">
+        <div id={ratingId} className="mb-4">
           <StarRating
             rating={product.rating.rate}
             count={product.rating.count}
@@ -202,22 +298,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         >
           <div className="flex flex-col">
             <span
+              id={priceId}
               className={cn(
                 "font-bold text-foreground",
                 isListView ? "text-2xl" : "text-xl"
               )}
+              aria-label={`Price: ${formatPrice(product.price)}`}
             >
               {formatPrice(product.price)}
             </span>
             {isInCart && (
-              <span className="text-sm text-green-600 font-medium">
+              <span
+                className="text-sm text-green-600 font-medium"
+                aria-label={`Currently ${cartQuantity} items in cart`}
+              >
                 In cart: {cartQuantity}
               </span>
             )}
           </div>
 
           <Button
+            ref={addToCartButtonRef}
             onClick={handleAddToCart}
+            onKeyDown={handleAddToCartKeyDown}
             disabled={isAddingToCart}
             size={isListView ? "default" : "sm"}
             className={cn(
@@ -225,11 +328,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               isAddingToCart && "animate-pulse",
               isListView ? "min-w-[120px]" : "min-w-[100px]"
             )}
+            aria-label={addToCartAriaLabel}
+            aria-describedby={lastAction ? `${cardId}-status` : undefined}
+            {...ariaStates.disabled(isAddingToCart)}
           >
             {isAddingToCart ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Adding...
+                <div
+                  className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"
+                  aria-hidden="true"
+                />
+                <span>Adding...</span>
               </div>
             ) : isInCart ? (
               "Add More"
@@ -238,7 +347,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </Button>
         </div>
+
+        {/* Hidden description for screen readers */}
+        <div id={descriptionId} className="sr-only">
+          {`${product.title} in ${product.category} category. ${formatPrice(
+            product.price
+          )}. ${generateAriaLabel.rating(
+            product.rating.rate,
+            product.rating.count
+          )}.`}
+        </div>
+
+        {/* Status announcements for screen readers */}
+        {lastAction && (
+          <div
+            id={`${cardId}-status`}
+            className="sr-only"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {lastAction}
+          </div>
+        )}
       </div>
-    </div>
+    </article>
   );
 };

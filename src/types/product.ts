@@ -54,6 +54,7 @@ export interface EnhancedProduct extends Product {
 }
 
 export interface ProductBadge {
+  value: string | number | undefined;
   type: 'new' | 'sale' | 'popular' | 'low-stock' | 'trending' | 'out-of-stock' | 'bestseller';
   label: string;
   color: string;
