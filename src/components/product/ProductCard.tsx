@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product";
@@ -165,7 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       className={cn(
         "group bg-card text-card-foreground rounded-xl border overflow-hidden transition-smooth hover-lift focus-ring",
         "shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]",
-        isListView && "flex flex-row",
+        isListView ? "flex flex-row" : "flex flex-col h-full",
         className
       )}
       role="article"
@@ -255,7 +256,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </Link>
 
       {/* Content Container */}
-      <div className={cn("p-4 flex flex-col", isListView && "flex-1")}>
+      <div className={cn("p-4 flex flex-col flex-1", isListView && "flex-1")}>
         {/* Category */}
         <div className="mb-2">
           <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
@@ -281,7 +282,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Rating */}
-        <div id={ratingId} className="mb-4">
+        <div id={ratingId} className="mb-4 flex-grow-0">
           <StarRating
             rating={product.rating.rate}
             count={product.rating.count}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
@@ -20,13 +20,7 @@ import {
   ChevronDown,
   Store,
 } from "lucide-react";
-import {
-  generateAriaLabel,
-  keyboardHandlers,
-  focusManagement,
-  screenReader,
-  ariaStates,
-} from "@/utils/accessibility";
+import { generateAriaLabel, screenReader } from "@/utils/accessibility";
 
 export const Header: React.FC = () => {
   const { cartState } = useCart();

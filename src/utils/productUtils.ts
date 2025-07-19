@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Product, EnhancedProduct, ProductBadge, ProductStats, ProductFilters, SortOption } from '@/types/product';
 
 // Constants for product categorization
@@ -28,11 +29,11 @@ export const BADGE_PRIORITIES = {
  */
 export const calculatePopularityScore = (product: Product): number => {
   const { rate, count } = product.rating;
-  
+
   // Weighted score: rating (70%) + normalized review count (30%)
   const ratingScore = (rate / 5) * 0.7;
   const countScore = Math.min(count / 200, 1) * 0.3; // Normalize to max 200 reviews
-  
+
   return Math.round((ratingScore + countScore) * 100) / 100;
 };
 
@@ -55,7 +56,7 @@ export const isOnSale = (product: Product): boolean => {
  */
 export const calculateDiscountPercentage = (product: Product): number => {
   if (!isOnSale(product)) return 0;
-  
+
   // Estimate original price based on category averages
   const categoryPriceMultipliers: Record<string, number> = {
     "men's clothing": 1.8,
@@ -63,10 +64,10 @@ export const calculateDiscountPercentage = (product: Product): number => {
     "jewelery": 2.5,
     "electronics": 1.4,
   };
-  
+
   const multiplier = categoryPriceMultipliers[product.category] || 1.5;
   const estimatedOriginalPrice = product.price * multiplier;
-  
+
   return Math.round(((estimatedOriginalPrice - product.price) / estimatedOriginalPrice) * 100);
 };
 
@@ -74,8 +75,8 @@ export const calculateDiscountPercentage = (product: Product): number => {
  * Determine if a product is popular
  */
 export const isPopularProduct = (product: Product): boolean => {
-  return product.rating.rate >= PRICE_THRESHOLDS.POPULAR_RATING_MIN && 
-         product.rating.count >= PRICE_THRESHOLDS.POPULAR_COUNT_MIN;
+  return product.rating.rate >= PRICE_THRESHOLDS.POPULAR_RATING_MIN &&
+    product.rating.count >= PRICE_THRESHOLDS.POPULAR_COUNT_MIN;
 };
 
 /**
@@ -83,8 +84,8 @@ export const isPopularProduct = (product: Product): boolean => {
  */
 export const isTrendingProduct = (product: Product): boolean => {
   const popularityScore = calculatePopularityScore(product);
-  return product.rating.rate >= PRICE_THRESHOLDS.TRENDING_SCORE_MIN && 
-         popularityScore > 0.75;
+  return product.rating.rate >= PRICE_THRESHOLDS.TRENDING_SCORE_MIN &&
+    popularityScore > 0.75;
 };
 
 /**
@@ -92,7 +93,7 @@ export const isTrendingProduct = (product: Product): boolean => {
  */
 export const getStockStatus = (product: Product): 'in-stock' | 'low-stock' | 'out-of-stock' => {
   const stockLevel = product.rating.count; // Using rating count as stock proxy
-  
+
   if (stockLevel === 0) return 'out-of-stock';
   if (stockLevel < PRICE_THRESHOLDS.LOW_STOCK_THRESHOLD) return 'low-stock';
   return 'in-stock';
@@ -143,7 +144,7 @@ export const getAvailabilityStatus = (product: Product): 'available' | 'limited'
  */
 export const generateProductBadges = (product: Product): ProductBadge[] => {
   const badges: ProductBadge[] = [];
-  
+
   // Out of stock badge (highest priority)
   if (getStockStatus(product) === 'out-of-stock') {
     badges.push({
@@ -151,9 +152,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: 'Out of Stock',
       color: 'bg-red-500 text-white',
       priority: BADGE_PRIORITIES['out-of-stock'],
+      value: undefined
     });
   }
-  
+
   // Low stock badge
   if (getStockStatus(product) === 'low-stock') {
     badges.push({
@@ -161,9 +163,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: `Only ${getStockCount(product)} left`,
       color: 'bg-orange-500 text-white',
       priority: BADGE_PRIORITIES['low-stock'],
+      value: undefined
     });
   }
-  
+
   // Sale badge
   if (isOnSale(product)) {
     const discount = calculateDiscountPercentage(product);
@@ -172,9 +175,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: discount > 0 ? `${discount}% OFF` : 'Sale',
       color: 'bg-red-600 text-white',
       priority: BADGE_PRIORITIES['sale'],
+      value: undefined
     });
   }
-  
+
   // Bestseller badge (for highly rated products with many reviews)
   if (product.rating.rate >= 4.5 && product.rating.count >= 150) {
     badges.push({
@@ -182,9 +186,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: 'Bestseller',
       color: 'bg-yellow-500 text-black',
       priority: BADGE_PRIORITIES['bestseller'],
+      value: undefined
     });
   }
-  
+
   // Popular badge
   if (isPopularProduct(product)) {
     badges.push({
@@ -192,9 +197,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: 'Popular',
       color: 'bg-blue-500 text-white',
       priority: BADGE_PRIORITIES['popular'],
+      value: undefined
     });
   }
-  
+
   // Trending badge
   if (isTrendingProduct(product)) {
     badges.push({
@@ -202,9 +208,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: 'Trending',
       color: 'bg-purple-500 text-white',
       priority: BADGE_PRIORITIES['trending'],
+      value: undefined
     });
   }
-  
+
   // New product badge
   if (isNewProduct(product)) {
     badges.push({
@@ -212,9 +219,10 @@ export const generateProductBadges = (product: Product): ProductBadge[] => {
       label: 'New',
       color: 'bg-green-500 text-white',
       priority: BADGE_PRIORITIES['new'],
+      value: undefined
     });
   }
-  
+
   // Sort badges by priority (highest first)
   return badges.sort((a, b) => (b.priority || 0) - (a.priority || 0));
 };
@@ -246,12 +254,12 @@ export const enhanceProduct = (product: Product): EnhancedProduct => {
     ratingCategory: getRatingCategory(product),
     availabilityStatus: getAvailabilityStatus(product),
   };
-  
+
   // Set original price for sale items
-  if (enhanced.isOnSale && enhanced.discountPercentage > 0) {
+  if (enhanced.isOnSale && enhanced.discountPercentage && enhanced.discountPercentage > 0) {
     enhanced.originalPrice = Math.round((product.price / (1 - enhanced.discountPercentage / 100)) * 100) / 100;
   }
-  
+
   return enhanced;
 };
 
@@ -276,31 +284,31 @@ export const calculateProductStats = (products: Product[]): ProductStats => {
       stockDistribution: { inStock: 0, lowStock: 0, outOfStock: 0 },
     };
   }
-  
+
   const totalPrice = products.reduce((sum, p) => sum + p.price, 0);
   const totalRating = products.reduce((sum, p) => sum + p.rating.rate, 0);
-  
+
   const categoryDistribution: Record<string, number> = {};
   const priceRanges = { budget: 0, midRange: 0, premium: 0 };
   const stockDistribution = { inStock: 0, lowStock: 0, outOfStock: 0 };
-  
+
   products.forEach(product => {
     // Category distribution
     categoryDistribution[product.category] = (categoryDistribution[product.category] || 0) + 1;
-    
+
     // Price ranges
     const priceCategory = getPriceCategory(product);
     if (priceCategory === 'budget') priceRanges.budget++;
     else if (priceCategory === 'mid-range') priceRanges.midRange++;
     else priceRanges.premium++;
-    
+
     // Stock distribution
     const stockStatus = getStockStatus(product);
     if (stockStatus === 'in-stock') stockDistribution.inStock++;
     else if (stockStatus === 'low-stock') stockDistribution.lowStock++;
     else stockDistribution.outOfStock++;
   });
-  
+
   return {
     totalProducts: products.length,
     averagePrice: Math.round((totalPrice / products.length) * 100) / 100,
@@ -329,14 +337,14 @@ export const getSortOptions = (): SortOption[] => [
  */
 export const sortProductsAdvanced = (products: EnhancedProduct[], sortBy: string): EnhancedProduct[] => {
   const sorted = [...products];
-  
+
   switch (sortBy) {
     case 'price-asc':
       return sorted.sort((a, b) => a.price - b.price);
-    
+
     case 'price-desc':
       return sorted.sort((a, b) => b.price - a.price);
-    
+
     case 'rating':
       return sorted.sort((a, b) => {
         // Primary: rating, Secondary: review count
@@ -345,17 +353,17 @@ export const sortProductsAdvanced = (products: EnhancedProduct[], sortBy: string
         }
         return b.rating.count - a.rating.count;
       });
-    
+
     case 'name':
       return sorted.sort((a, b) => a.title.localeCompare(b.title));
-    
+
     case 'popularity':
       return sorted.sort((a, b) => {
         const aScore = a.popularityScore || 0;
         const bScore = b.popularityScore || 0;
         return bScore - aScore;
       });
-    
+
     case 'newest':
       return sorted.sort((a, b) => {
         // New products first, then by rating count (lower = newer)
@@ -364,7 +372,7 @@ export const sortProductsAdvanced = (products: EnhancedProduct[], sortBy: string
         }
         return a.rating.count - b.rating.count;
       });
-    
+
     case 'trending':
       return sorted.sort((a, b) => {
         // Trending products first, then by popularity score
@@ -375,7 +383,7 @@ export const sortProductsAdvanced = (products: EnhancedProduct[], sortBy: string
         const bScore = b.popularityScore || 0;
         return bScore - aScore;
       });
-    
+
     default:
       return sorted;
   }
@@ -393,33 +401,33 @@ export const filterProductsEnhanced = (
     if (filters.category && product.category !== filters.category) {
       return false;
     }
-    
+
     if (filters.categories?.length && !filters.categories.includes(product.category)) {
       return false;
     }
-    
+
     // Price filtering
     const minPrice = filters.priceRange?.min || filters.minPrice;
     const maxPrice = filters.priceRange?.max || filters.maxPrice;
-    
+
     if (minPrice !== undefined && product.price < minPrice) {
       return false;
     }
-    
+
     if (maxPrice !== undefined && product.price > maxPrice) {
       return false;
     }
-    
+
     // Rating filtering
     if (filters.rating && product.rating.rate < filters.rating) {
       return false;
     }
-    
+
     // Stock status filtering
     if (filters.stockStatus?.length && !filters.stockStatus.includes(product.stockStatus!)) {
       return false;
     }
-    
+
     // Search query filtering
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
@@ -429,12 +437,12 @@ export const filterProductsEnhanced = (
         product.category,
         ...(product.badges?.map(b => b.label) || [])
       ].join(' ').toLowerCase();
-      
+
       if (!searchableText.includes(query)) {
         return false;
       }
     }
-    
+
     // Tags filtering (if implemented)
     if (filters.tags?.length) {
       const productTags = [
@@ -443,16 +451,16 @@ export const filterProductsEnhanced = (
         product.ratingCategory,
         ...(product.badges?.map(b => b.type) || [])
       ];
-      
-      const hasMatchingTag = filters.tags.some(tag => 
+
+      const hasMatchingTag = filters.tags.some(tag =>
         productTags.includes(tag as any)
       );
-      
+
       if (!hasMatchingTag) {
         return false;
       }
     }
-    
+
     return true;
   });
 };
@@ -464,7 +472,7 @@ export const getPriceRange = (products: Product[]): { min: number; max: number }
   if (products.length === 0) {
     return { min: 0, max: 100 };
   }
-  
+
   const prices = products.map(p => p.price);
   return {
     min: Math.floor(Math.min(...prices)),

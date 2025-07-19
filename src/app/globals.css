@@ -101,10 +101,12 @@
   --duration-normal: 300ms;
   --duration-slow: 500ms;
 
-  /* Enhanced Design System - Enhanced Shadows */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-product: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Enhanced Design System - Beautiful Smooth Shadows */
+  --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 16px -4px rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 8px 24px -4px rgb(0 0 0 / 0.12), 0 4px 16px -2px rgb(0 0 0 / 0.08);
+  --shadow-product: 0 12px 32px -8px rgb(0 0 0 / 0.1), 0 8px 24px -4px rgb(0 0 0 / 0.06);
+  --shadow-elegant: 0 4px 20px -2px rgb(0 0 0 / 0.06), 0 2px 12px -2px rgb(0 0 0 / 0.04);
+  --shadow-soft: 0 1px 6px -1px rgb(0 0 0 / 0.06), 0 2px 8px -2px rgb(0 0 0 / 0.03);
 }
 
 .dark {
@@ -159,10 +161,12 @@
   --error: #dc2626;
   --info: #0891b2;
 
-  /* Enhanced Design System - Dark Mode Enhanced Shadows */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-product: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  /* Enhanced Design System - Dark Mode Beautiful Smooth Shadows */
+  --shadow-card: 0 4px 12px -2px rgb(0 0 0 / 0.25), 0 8px 24px -4px rgb(0 0 0 / 0.15);
+  --shadow-card-hover: 0 12px 32px -4px rgb(0 0 0 / 0.3), 0 8px 24px -2px rgb(0 0 0 / 0.2);
+  --shadow-product: 0 16px 40px -8px rgb(0 0 0 / 0.35), 0 12px 32px -4px rgb(0 0 0 / 0.2);
+  --shadow-elegant: 0 8px 28px -2px rgb(0 0 0 / 0.2), 0 4px 16px -2px rgb(0 0 0 / 0.15);
+  --shadow-soft: 0 2px 8px -1px rgb(0 0 0 / 0.2), 0 4px 12px -2px rgb(0 0 0 / 0.1);
 }
 
 @theme inline {
@@ -217,6 +221,7 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 }
+
 /* Enhanced Design System - Responsive Grid System */
 .product-grid {
   display: grid;
@@ -295,6 +300,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -305,6 +311,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -316,6 +323,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -327,12 +335,15 @@
     opacity: 0;
     transform: scale(0.3);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   70% {
     transform: scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -341,6 +352,7 @@
 
 /* Enhanced Design System - Accessibility */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -348,7 +360,7 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   /* Disable hover effects for reduced motion */
   .hover-lift:hover,
   .hover-scale:hover {
@@ -450,6 +462,7 @@
 
 /* Touch target sizing for mobile accessibility */
 @media (max-width: 768px) {
+
   button,
   a,
   input[type="button"],
@@ -530,7 +543,9 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}/* Enh
+}
+
+/* Enh
 anced Cart Interactions */
 .cart-item-enter {
   animation: cartItemEnter var(--duration-normal) var(--ease-out);
@@ -558,6 +573,7 @@ anced Cart Interactions */
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -569,6 +585,7 @@ anced Cart Interactions */
     opacity: 1;
     transform: translateX(0) scale(1);
   }
+
   to {
     opacity: 0;
     transform: translateX(-100px) scale(0.95);
@@ -580,9 +597,11 @@ anced Cart Interactions */
     opacity: 0;
     transform: translateY(-100px) scale(0.8);
   }
+
   60% {
     transform: translateY(10px) scale(1.05);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -590,10 +609,13 @@ anced Cart Interactions */
 }
 
 @keyframes cartBadgePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.8;
@@ -604,10 +626,12 @@ anced Cart Interactions */
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
     background-color: var(--success);
   }
+
   100% {
     transform: scale(1);
   }
@@ -615,10 +639,10 @@ anced Cart Interactions */
 
 /* Loading States */
 .loading-shimmer {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.4) 50%, 
-    transparent 100%);
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -627,6 +651,7 @@ anced Cart Interactions */
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }

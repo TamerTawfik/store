@@ -1,17 +1,10 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Product, ProductFilters as ProductFiltersType } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductFilters } from "@/components/product/ProductFilters";
 import { NoResults } from "@/components/product/NoResults";
 import {
-  ProductSkeleton,
   ProductSkeletonGrid,
   ProductSkeletonList,
 } from "@/components/product/ProductSkeleton";
@@ -21,10 +14,7 @@ import { useCategories } from "@/hooks/useProducts";
 import { useSearch } from "@/hooks/useSearch";
 import { sortProducts, filterProductsAdvanced } from "@/utils/helpers";
 import { generateBreadcrumbs } from "@/utils/breadcrumbUtils";
-import {
-  getTrendingProducts,
-  getRecommendedCategories,
-} from "@/utils/recommendationUtils";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,16 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { Grid3X3, List, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  generateAriaLabel,
-  keyboardHandlers,
-  screenReader,
-  ariaStates,
-} from "@/utils/accessibility";
+import { generateAriaLabel, screenReader } from "@/utils/accessibility";
 
 interface EnhancedProductListProps {
   products: Product[];
@@ -54,6 +38,35 @@ interface EnhancedProductListProps {
   onViewModeChange?: (mode: "grid" | "list") => void;
   filters?: ProductFiltersType;
   onFiltersChange?: (filters: ProductFiltersType) => void;
+  breadcrumbs?: Array<{ label: string; href?: string }>;
+}
+
+// Wrapper component to handle useSearchParams with Suspense
+export function ProductListWithSearchParams(props: EnhancedProductListProps) {
+  const searchParams = useSearchParams();
+
+  // Generate breadcrumbs from search params if not provided
+  const breadcrumbs = useMemo(() => {
+    if (props.breadcrumbs) return props.breadcrumbs;
+
+    const searchQuery =
+      searchParams.get("search") ||
+      searchParams.get("q") ||
+      props.filters?.searchQuery;
+    const category = searchParams.get("category") || props.filters?.category;
+
+    return generateBreadcrumbs({
+      category,
+      searchQuery: searchQuery || undefined,
+    });
+  }, [
+    searchParams,
+    props.filters?.category,
+    props.filters?.searchQuery,
+    props.breadcrumbs,
+  ]);
+
+  return <ProductList {...props} breadcrumbs={breadcrumbs} />;
 }
 
 export const ProductList: React.FC<EnhancedProductListProps> = ({
@@ -65,10 +78,10 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
   onViewModeChange: externalOnViewModeChange,
   filters: externalFilters,
   onFiltersChange: externalOnFiltersChange,
+  breadcrumbs = [],
 }) => {
   const { addToCart, isInCart, getItemQuantity } = useCart();
   const { categories } = useCategories();
-  const searchParams = useSearchParams();
 
   const {
     trendingSearches,
@@ -90,7 +103,6 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
   // Refs for accessibility
   const mainContentRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const sortSelectRef = useRef<HTMLSelectElement>(null);
 
   // Use external props if provided, otherwise use internal state
   const viewMode = externalViewMode ?? internalViewMode;
@@ -164,20 +176,6 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
   }, [filters]);
 
   const activeFiltersCount = getActiveFiltersCount();
-
-  // Generate breadcrumbs based on current filters and search
-  const breadcrumbs = useMemo(() => {
-    const searchQuery =
-      searchParams.get("search") ||
-      searchParams.get("q") ||
-      filters.searchQuery;
-    const category = searchParams.get("category") || filters.category;
-
-    return generateBreadcrumbs({
-      category,
-      searchQuery: searchQuery || undefined,
-    });
-  }, [searchParams, filters.category, filters.searchQuery]);
 
   // Handle category selection from no results
   const handleCategoryClick = useCallback(
@@ -521,12 +519,7 @@ export const ProductList: React.FC<EnhancedProductListProps> = ({
         <div className="flex-1 min-w-0">
           {processedProducts.length === 0 ? (
             <NoResults
-              searchQuery={
-                filters.searchQuery ||
-                searchParams.get("search") ||
-                searchParams.get("q") ||
-                undefined
-              }
+              searchQuery={filters.searchQuery || undefined}
               suggestedCategories={suggestedCategories}
               popularProducts={popularProducts}
               trendingSearches={trendingSearches}

@@ -82,7 +82,6 @@ export const useSearch = ({ products, categories }: UseSearchProps): UseSearchRe
         if (!searchQuery.trim()) return [];
 
         const query = searchQuery.toLowerCase();
-        const suggestions: SearchSuggestion[] = [];
 
         // Product title suggestions
         const productTitles = products

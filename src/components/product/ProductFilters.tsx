@@ -6,13 +6,7 @@ import { ProductFilters as ProductFiltersType } from "@/types/product";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChevronDownIcon,
@@ -24,13 +18,7 @@ import {
   TagIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  generateAriaLabel,
-  keyboardHandlers,
-  focusManagement,
-  screenReader,
-  ariaStates,
-} from "@/utils/accessibility";
+import { generateAriaLabel, screenReader } from "@/utils/accessibility";
 
 interface ProductFiltersProps {
   filters: ProductFiltersType;
