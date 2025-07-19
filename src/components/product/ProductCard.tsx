@@ -71,7 +71,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
     try {
-      await onAddToCart(product);
+      const result = await onAddToCart(product);
+      if (!result.success) {
+        // Handle error case if needed
+        console.error("Failed to add to cart:", result.error);
+      }
     } finally {
       // Add a small delay for better UX feedback
       setTimeout(() => setIsAddingToCart(false), 300);

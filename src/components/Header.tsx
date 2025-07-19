@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
+import { useCartUI } from "@/components/cart/CartProvider";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { useSearch } from "@/hooks/useSearch";
-import { CartSidebar } from "@/components/cart/CartSidebar";
 import { SearchInput } from "@/components/ui/search";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,12 +23,12 @@ import {
 
 export const Header: React.FC = () => {
   const { cartState } = useCart();
+  const { toggleCart } = useCartUI();
   const { products } = useProducts();
   const { categories } = useCategories();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -40,10 +40,6 @@ export const Header: React.FC = () => {
     trendingSearches,
     addToRecentSearches,
   } = useSearch({ products, categories });
-
-  const toggleCart = () => {
-    setIsCartOpen(!isCartOpen);
-  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -85,7 +81,7 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className="bg-white shadow-lg border-b sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+      <header className=" shadow-lg border-b sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Enhanced Logo with Icon */}
@@ -345,9 +341,6 @@ export const Header: React.FC = () => {
           </div>
         )}
       </header>
-
-      {/* Enhanced Cart Sidebar */}
-      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 };
