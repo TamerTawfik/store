@@ -40,15 +40,47 @@ export interface EnhancedProduct extends Product {
   isNew?: boolean;
   isOnSale?: boolean;
   isPopular?: boolean;
+  isTrending?: boolean;
   stockStatus?: 'in-stock' | 'low-stock' | 'out-of-stock';
   stockCount?: number;
   originalPrice?: number; // For sale calculations
+  discountPercentage?: number;
+  popularityScore?: number;
   badges?: ProductBadge[];
+  // Additional computed properties
+  priceCategory?: 'budget' | 'mid-range' | 'premium';
+  ratingCategory?: 'poor' | 'fair' | 'good' | 'excellent';
+  availabilityStatus?: 'available' | 'limited' | 'unavailable';
 }
 
 export interface ProductBadge {
-  type: 'new' | 'sale' | 'popular' | 'low-stock' | 'trending';
+  type: 'new' | 'sale' | 'popular' | 'low-stock' | 'trending' | 'out-of-stock' | 'bestseller';
   label: string;
   color: string;
   icon?: string;
+  priority?: number; // For badge ordering
+}
+
+export interface ProductStats {
+  totalProducts: number;
+  averagePrice: number;
+  averageRating: number;
+  categoryDistribution: Record<string, number>;
+  priceRanges: {
+    budget: number; // < $20
+    midRange: number; // $20-$100
+    premium: number; // > $100
+  };
+  stockDistribution: {
+    inStock: number;
+    lowStock: number;
+    outOfStock: number;
+  };
+}
+
+export interface SortOption {
+  value: string;
+  label: string;
+  direction: 'asc' | 'desc';
+  field: keyof Product | 'popularity' | 'newest' | 'trending';
 }

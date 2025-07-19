@@ -7,6 +7,8 @@ import {
   TrendingUp,
   AlertTriangle,
   XCircle,
+  Flame,
+  Award,
 } from "lucide-react";
 
 export type BadgeType =
@@ -14,7 +16,9 @@ export type BadgeType =
   | "sale"
   | "popular"
   | "low-stock"
-  | "out-of-stock";
+  | "out-of-stock"
+  | "trending"
+  | "bestseller";
 
 interface ProductBadgeProps {
   type: BadgeType;
@@ -52,6 +56,18 @@ const badgeConfig = {
     icon: XCircle,
     className: "bg-gray-500 text-white border-gray-500",
     iconClassName: "text-white",
+  },
+  trending: {
+    label: "Trending",
+    icon: Flame,
+    className: "bg-purple-500 text-white border-purple-500 animate-pulse",
+    iconClassName: "text-white",
+  },
+  bestseller: {
+    label: "Bestseller",
+    icon: Award,
+    className: "bg-yellow-500 text-black border-yellow-500",
+    iconClassName: "text-black",
   },
 };
 
