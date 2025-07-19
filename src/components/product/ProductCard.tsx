@@ -3,7 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { formatPrice, truncateText, generateStars } from "@/utils/helpers";
+import { ProductBadge } from "./ProductBadge";
+import {
+  formatPrice,
+  truncateText,
+  generateStars,
+  getProductBadges,
+  getPrimaryBadge,
+} from "@/utils/helpers";
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +29,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onAddToCart(product);
   };
 
+  const primaryBadge = getPrimaryBadge(product);
+  const allBadges = getProductBadges(product);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link href={`/product/${product.id}`}>
@@ -32,6 +42,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             fill
             className="bg-white object-contain p-4 hover:scale-105 transition-transform duration-300"
           />
+          {/* Primary Badge - positioned at top-left */}
+          {primaryBadge && (
+            <div className="absolute top-2 left-2 z-10">
+              <ProductBadge
+                type={primaryBadge.type}
+                value={primaryBadge.value}
+              />
+            </div>
+          )}
+          {/* Additional badges - positioned at top-right if there are multiple */}
+          {allBadges.length > 1 && (
+            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+              {allBadges
+                .filter((badge) => badge.type !== primaryBadge?.type)
+                .slice(0, 2) // Show max 2 additional badges
+                .map((badge, index) => (
+                  <ProductBadge
+                    key={`${badge.type}-${index}`}
+                    type={badge.type}
+                    value={badge.value}
+                    className="text-xs"
+                  />
+                ))}
+            </div>
+          )}
         </div>
       </Link>
 
