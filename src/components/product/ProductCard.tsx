@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { ProductBadge } from "./ProductBadge";
+import { Star, StarHalf } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   formatPrice,
   truncateText,
-  generateStars,
   getProductBadges,
   getPrimaryBadge,
 } from "@/utils/helpers";
@@ -17,100 +18,221 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void;
   isInCart: boolean;
   cartQuantity: number;
+  viewMode?: "grid" | "list";
+  showBadges?: boolean;
+  className?: string;
 }
+
+// Enhanced star rating component with filled/outlined stars
+const StarRating: React.FC<{ rating: number; count: number }> = ({
+  rating,
+  count,
+}) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating - fullStars >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center">
+        {/* Full stars */}
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <Star
+            key={`full-${i}`}
+            className="w-4 h-4 fill-yellow-400 text-yellow-400"
+          />
+        ))}
+        {/* Half star */}
+        {hasHalfStar && (
+          <StarHalf className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        )}
+        {/* Empty stars */}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
+        ))}
+      </div>
+      <span className="text-sm text-muted-foreground ml-1">({count})</span>
+    </div>
+  );
+};
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
   isInCart,
   cartQuantity,
+  viewMode = "grid",
+  showBadges = true,
+  className,
 }) => {
-  const handleAddToCart = () => {
-    onAddToCart(product);
+  const [isImageHovered, setIsImageHovered] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    try {
+      await onAddToCart(product);
+    } finally {
+      // Add a small delay for better UX feedback
+      setTimeout(() => setIsAddingToCart(false), 300);
+    }
   };
 
   const primaryBadge = getPrimaryBadge(product);
   const allBadges = getProductBadges(product);
 
+  const isListView = viewMode === "list";
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link href={`/product/${product.id}`}>
-        <div className="relative h-48 bg-gray-100 cursor-pointer">
+    <div
+      className={cn(
+        "group bg-card text-card-foreground rounded-xl border overflow-hidden transition-smooth hover-lift focus-ring",
+        "shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]",
+        isListView && "flex flex-row",
+        className
+      )}
+    >
+      {/* Image Container */}
+      <Link href={`/product/${product.id}`} className="block">
+        <div
+          className={cn(
+            "relative bg-white cursor-pointer overflow-hidden",
+            isListView ? "w-48 h-32 flex-shrink-0" : "h-64 sm:h-56 md:h-64"
+          )}
+          onMouseEnter={() => setIsImageHovered(true)}
+          onMouseLeave={() => setIsImageHovered(false)}
+        >
           <Image
             src={product.image}
             alt={product.title}
             fill
-            className="bg-white object-contain p-4 hover:scale-105 transition-transform duration-300"
+            className={cn(
+              "object-contain p-4 transition-smooth",
+              isImageHovered && "scale-110"
+            )}
+            sizes={
+              isListView
+                ? "192px"
+                : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            }
           />
-          {/* Primary Badge - positioned at top-left */}
-          {primaryBadge && (
-            <div className="absolute top-2 left-2 z-10">
-              <ProductBadge
-                type={primaryBadge.type}
-                value={primaryBadge.value}
-              />
-            </div>
-          )}
-          {/* Additional badges - positioned at top-right if there are multiple */}
-          {allBadges.length > 1 && (
-            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
-              {allBadges
-                .filter((badge) => badge.type !== primaryBadge?.type)
-                .slice(0, 2) // Show max 2 additional badges
-                .map((badge, index) => (
+
+          {/* Badges */}
+          {showBadges && (
+            <>
+              {/* Primary Badge - top-left */}
+              {primaryBadge && (
+                <div className="absolute top-3 left-3 z-10 animate-scale-in">
                   <ProductBadge
-                    key={`${badge.type}-${index}`}
-                    type={badge.type}
-                    value={badge.value}
-                    className="text-xs"
+                    type={primaryBadge.type}
+                    value={primaryBadge.value}
                   />
-                ))}
-            </div>
+                </div>
+              )}
+              {/* Additional badges - top-right */}
+              {allBadges.length > 1 && (
+                <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+                  {allBadges
+                    .filter((badge) => badge.type !== primaryBadge?.type)
+                    .slice(0, 2)
+                    .map((badge, index) => (
+                      <ProductBadge
+                        key={`${badge.type}-${index}`}
+                        type={badge.type}
+                        value={badge.value}
+                        className="text-xs animate-scale-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      />
+                    ))}
+                </div>
+              )}
+            </>
           )}
+
+          {/* Hover overlay for better image zoom effect */}
+          <div
+            className={cn(
+              "absolute inset-0 bg-black/5 transition-opacity duration-300",
+              isImageHovered ? "opacity-100" : "opacity-0"
+            )}
+          />
         </div>
       </Link>
 
-      <div className="p-4">
+      {/* Content Container */}
+      <div className={cn("p-4 flex flex-col", isListView && "flex-1")}>
+        {/* Category */}
         <div className="mb-2">
-          <span className="text-xs text-gray-500 uppercase tracking-wide">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
             {product.category}
           </span>
         </div>
 
-        <Link href={`/product/${product.id}`}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer">
-            {truncateText(product.title, 60)}
+        {/* Title */}
+        <Link href={`/product/${product.id}`} className="block mb-3">
+          <h3
+            className={cn(
+              "font-semibold text-foreground transition-colors hover:text-primary cursor-pointer line-clamp-2",
+              isListView ? "text-lg" : "text-base"
+            )}
+          >
+            {truncateText(product.title, isListView ? 80 : 60)}
           </h3>
         </Link>
 
-        <div className="flex items-center mb-3">
-          <span className="text-yellow-400 text-sm mr-1">
-            {generateStars(product.rating.rate)}
-          </span>
-          <span className="text-gray-500 text-sm">
-            ({product.rating.count})
-          </span>
+        {/* Rating */}
+        <div className="mb-4">
+          <StarRating
+            rating={product.rating.rate}
+            count={product.rating.count}
+          />
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-gray-900">
-            {formatPrice(product.price)}
-          </span>
-
-          <div className="flex items-center gap-2">
+        {/* Price and Actions */}
+        <div
+          className={cn(
+            "flex items-center justify-between mt-auto",
+            isListView &&
+              "flex-col items-start gap-3 sm:flex-row sm:items-center"
+          )}
+        >
+          <div className="flex flex-col">
+            <span
+              className={cn(
+                "font-bold text-foreground",
+                isListView ? "text-2xl" : "text-xl"
+              )}
+            >
+              {formatPrice(product.price)}
+            </span>
             {isInCart && (
               <span className="text-sm text-green-600 font-medium">
                 In cart: {cartQuantity}
               </span>
             )}
-            <Button
-              onClick={handleAddToCart}
-              size="sm"
-              className="min-w-[100px]"
-            >
-              {isInCart ? "Add More" : "Add to Cart"}
-            </Button>
           </div>
+
+          <Button
+            onClick={handleAddToCart}
+            disabled={isAddingToCart}
+            size={isListView ? "default" : "sm"}
+            className={cn(
+              "transition-smooth hover-scale focus-ring",
+              isAddingToCart && "animate-pulse",
+              isListView ? "min-w-[120px]" : "min-w-[100px]"
+            )}
+          >
+            {isAddingToCart ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Adding...
+              </div>
+            ) : isInCart ? (
+              "Add More"
+            ) : (
+              "Add to Cart"
+            )}
+          </Button>
         </div>
       </div>
     </div>

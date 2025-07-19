@@ -59,7 +59,7 @@ export const filterProducts = (
   });
 };
 
-// Generate star rating display
+// Generate star rating display (legacy function for backward compatibility)
 export const generateStars = (rating: number): string => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating - fullStars >= 0.5;
@@ -68,6 +68,20 @@ export const generateStars = (rating: number): string => {
   return '★'.repeat(fullStars) + 
          (hasHalfStar ? '☆' : '') + 
          '☆'.repeat(emptyStars);
+};
+
+// Enhanced star rating data for component use
+export const getStarRatingData = (rating: number) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating - fullStars >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  
+  return {
+    fullStars,
+    hasHalfStar,
+    emptyStars,
+    rating
+  };
 };
 
 // Debounce function for search input
