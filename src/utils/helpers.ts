@@ -43,7 +43,7 @@ export const sortProducts = (products: Product[], sortBy: string): Product[] => 
   }
 };
 
-// Filter products by category and price range
+// Enhanced filter products with multiple criteria
 export const filterProducts = (
   products: Product[],
   category?: string,
@@ -56,6 +56,51 @@ export const filterProducts = (
     const matchesMaxPrice = !maxPrice || product.price <= maxPrice;
     
     return matchesCategory && matchesMinPrice && matchesMaxPrice;
+  });
+};
+
+// Enhanced filter products with advanced criteria
+export const filterProductsAdvanced = (
+  products: Product[],
+  filters: {
+    category?: string;
+    categories?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    priceRange?: { min: number; max: number };
+    rating?: number;
+    stockStatus?: ('in-stock' | 'low-stock' | 'out-of-stock')[];
+    searchQuery?: string;
+  }
+): Product[] => {
+  return products.filter(product => {
+    // Category filtering (single or multiple)
+    const matchesCategory = !filters.category || product.category === filters.category;
+    const matchesCategories = !filters.categories?.length || 
+      filters.categories.includes(product.category);
+    
+    // Price filtering
+    const minPrice = filters.priceRange?.min || filters.minPrice;
+    const maxPrice = filters.priceRange?.max || filters.maxPrice;
+    const matchesMinPrice = !minPrice || product.price >= minPrice;
+    const matchesMaxPrice = !maxPrice || product.price <= maxPrice;
+    
+    // Rating filtering
+    const matchesRating = !filters.rating || product.rating.rate >= filters.rating;
+    
+    // Stock status filtering
+    const productStockStatus = getStockStatus(product);
+    const matchesStockStatus = !filters.stockStatus?.length || 
+      filters.stockStatus.includes(productStockStatus);
+    
+    // Search query filtering
+    const matchesSearch = !filters.searchQuery || 
+      product.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(filters.searchQuery.toLowerCase());
+    
+    return matchesCategory && matchesCategories && matchesMinPrice && 
+           matchesMaxPrice && matchesRating && matchesStockStatus && matchesSearch;
   });
 };
 
